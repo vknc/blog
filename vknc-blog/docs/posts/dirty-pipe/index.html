@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="" lang="en-us"><head>
+    
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=7" />
+
+    <link
+    rel="icon"
+    href='/favicon.png'
+/>
+<link
+    rel="shortcut icon"
+    href='/favicon.ico'
+    type="image/x-icon"
+/>
+<link
+    rel="apple-touch-icon"
+    href='/apple-touch-icon.png'
+/>
+
+<title>
+        
+            Bug задлан: Dirty pipe – CVE-2022-0847  &ndash;
+        
+        VKNC blog
+    </title>
+
+    
+    <link href="/symbols-nerd-font/symbols-nerd-font.css" rel="stylesheet" integrity="sha512-lydow8GLOLlYNOtHlksNCmGWWCBsbIEtikXpHzfWqx78HLlyQZHOzyLwPpKol4Th6aCwLUXOfODVYgwrd3nwKQ=="/>
+    <link href="/jetbrains-mono/jetbrains-mono.css" rel="stylesheet" integrity="sha512-tJxlgL6v1Y7kFf+qB8SloaAMKnOAw6WouknxXtIjkBux9Y/9aX81EUWOJO8c/3l98DmjG8brr4to7zaez606Fg=="/>
+
+    
+    
+    <link type="text/css" rel="stylesheet" href=https://vknc.github.io/css/styles.abbd6311bb4b6ca58f8e7398140529245ae0f6428b759fcd830742eee2619eabb900ba9914a9affb82aa9a16a9b9ea727bb315315a976a0db0e7513a5f12c504.css integrity="sha512-q71jEbtLbKWPjnOYFAUpJFrg9kKLdZ/NgwdC7uJhnqu5ALqZFKmv&#43;4Kqmhapuepye7MVMVqXag2w51E6XxLFBA==" />
+<meta name="author" content="" />
+
+    
+    
+        <meta name="description" content="ийн kernel v5.8 хувилбар дээр гарсан дурын read-only файлыг дарж бичих боломжтой эмзэг байдал /Dirty COW-тэй төстэй/ бөгөөд мэдээж дурын файлыг дарж бичиж байгаа учраас privilege escalation буюу энгийн хэрэглэгчээс root хэрэглэгч болтол эрхээ ахиулах боломжийг олгож байгаа юм.
+2021-04-29нд CM4all веб хостинг системийг хариуцдаг Max Kellermann гэх залууд харилцагчаас нь татаж авсан access log нь gzip-ээр задрахгүй буюу эвдэрсэн байна гэсэн гомдол орж иржээ. Файлыг шалгаж үзэхэд доторх контент нь эвдрээгүй байсан ба gzip задалж чадахгүй байсан шалтгаан нь файлын CRC checksum нь алдаатай байсан учраас checksum-ыг нь гараараа засаад тухайн гомдлыг хаасан байна." />
+    
+
+<meta property="og:site_name"
+    content='VKNC blog' />
+
+    <meta property="og:title" content="Bug задлан: Dirty pipe – CVE-2022-0847" />
+    <meta property="og:type" content="article" />
+    
+    <meta
+        property="article:author" content="" />
+    <meta
+        property="article:published_time"
+        content='2023-07-13T16:25:59Z&#43;0800' />
+    
+    <meta property="og:url" content="https://vknc.github.io/posts/dirty-pipe/" />
+    
+    
+    <meta property="og:image"
+        content="https://vknc.github.io/img/icon.svg" />
+    
+        <meta property="og:description" content="Dirty pipe нь линуксийн kernel v5.8 хувилбар дээр гарсан дурын read-only файлыг дарж бичих боломжтой эмзэг байдал /Dirty COW-тэй төстэй/ бөгөөд мэдээж дурын фай" />
+    
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:domain"
+      content='vknc.github.io'
+/>
+<meta property="twitter:url" content="https://vknc.github.io/posts/dirty-pipe/" />
+
+
+    <meta name="twitter:title" content="Bug задлан: Dirty pipe – CVE-2022-0847" />
+    
+    
+    
+    <meta name="twitter:image"
+        content="https://vknc.github.io/img/icon.svg" />
+    
+        <meta name="twitter:description" content="Dirty pipe нь линуксийн kernel v5.8 хувилбар дээр гарсан дурын read-only файлыг дарж бичих боломжтой эмзэг байдал /Dirty COW-тэй төстэй/ бөгөөд мэдээж дурын фай" />
+    
+
+<link rel="manifest" href="/manifest/index.json" />
+</head>
+
+
+<body>
+        <div id="baseContainer"><header class="">
+<div class="titleAndSearchContainer">
+        <div id="titleContainer">
+            
+                <a class="unstyledLink" href="/">
+                    <img src='/logo.svg' alt='Logo'/>
+                </a>
+            
+            <div class="rightOfLogo">
+                <div class="titleAndHamburger">
+                    <h1>
+                        <a class="unstyledLink" href="/">VKNC blog</a>
+                        
+                    </h1>
+                    
+                </div>
+                <div id="wide_nav"><nav>
+    
+    <ul id="main-nav">
+        <li><a href="/">Home</a></li>
+        
+            <li><a href="/posts">Posts</a></li>
+        
+        
+        
+        
+        
+        
+        
+            <li><a href="/tags">Tags</a></li>
+        
+        
+    </ul>
+</nav>
+</div>
+            </div>
+        </div>
+        <div class="search">
+    <input id="searchbar" type="text" placeholder='Search' />
+    <a class="nerdlink" onclick="newSearch();">&#xf002;</a>
+</div>
+<script>
+    function newSearch() {
+        let term = searchbar.value.trim();
+        if (!term) return;
+        location.href = `/search?q=${term}`;
+    }
+    searchbar.onkeyup = (ev) => {if (ev.keyCode == 13) newSearch()};
+</script>
+
+    </div>
+    <div id="links">
+        
+        
+        
+    </div>
+    
+
+</header>
+<div id="contentContainer">
+                <div id="content">
+                    <main>
+<article class="card single">
+    
+        <h1>Bug задлан: Dirty pipe – CVE-2022-0847</h1>
+    
+    
+        <p class="date">
+            <span title='Date'> </span>
+    2023-07-13
+
+</p>
+    
+    
+    
+    
+    <div><p>Dirty pipe нь линуксийн kernel v5.8 хувилбар дээр гарсан дурын read-only файлыг дарж бичих боломжтой эмзэг байдал /Dirty COW-тэй төстэй/ бөгөөд мэдээж дурын файлыг дарж бичиж байгаа учраас privilege escalation буюу энгийн хэрэглэгчээс root хэрэглэгч болтол эрхээ ахиулах боломжийг олгож байгаа юм.</p>
+<p>2021-04-29нд CM4all веб хостинг системийг хариуцдаг Max Kellermann гэх залууд харилцагчаас нь татаж авсан access log нь gzip-ээр задрахгүй буюу эвдэрсэн байна гэсэн гомдол орж иржээ. Файлыг шалгаж үзэхэд доторх контент нь эвдрээгүй байсан ба gzip задалж чадахгүй байсан шалтгаан нь файлын CRC checksum нь алдаатай байсан учраас checksum-ыг нь гараараа засаад тухайн гомдлыг хаасан байна. Гэтэл энэ гомдлоос жилийн дараа 2022 оны 2-р сард мөн л өмнөхтэй адил шалтгаантай эвдэрсэн хэд хэдэн файлын талаарх гомдол орж ирснээр мань хүн шалтгааныг нь олохоор шинжилгээ хийх явцдаа линуксийн кернелийн түвшний эмзэг байдал болохыг олж илрүүлжээ. Dirty pipe нь зөвхөн линукс гэлтгүй андройд үйлдлийн систем дээр ч боломжтой байсан учраас маш өргөн хүрээг хамарсан эмзэг байдал юм.</p>
+<p>За тэгэхээр яагаад ийм зүйл болсон тухай задлах юм бол линукс үйлдлийн системийн зарим concept-ыг ойлгох шаардлагатай болох юм. Линукс, windows зэрэг бүх үйлдлийн систем user mode, kernel mode гэсэн 2 хэсэгт хуваагдах бөгөөд user mode-ын процессууд нь тусгаарлалт, хамгаалалт өндөртэй мөн бага privilege-тэй байдаг бол kernel mode-д зөвхөн итгэлтэй буюу үйлдлийн системийн өөрийнх native процессууд ажиллах боловч хоорондын тусгаарлалт байхгүй учраас кернелийн түвшний эмзэг байдал хамгийн аюултай байдаг. Өөрөөр хэлбэл кернелийн түвшний эмзэг байдлыг ашиглан тухайн үйлдлийн системийг эвдэх, бүх удирдлагыг гартаа авч болно гэсэн үг. Хэрвээ user mode-оос kernel mode-руу хандах бол тусгай хамгаалалт өндөртэй интерфэйсүүдээр дамждаг.</p>
+<p><img src="/kernel.gif" alt=""></p>
+<p>Мөн үйлдлийн системд физик санах ой /RAM/ нь ашиглах хязгаартай учраас виртуал санах ойг ашигладаг ба линуксийн виртуал санах ойн хамгийн бага нэгж нь page бөгөөд ихэвчлэн 4096 байт хэмжээтэй байдаг ч процессорын архитектураас хамаараад хэмжээ нь өөрчлөгдөж болно. Физик санах ойд харгалзах виртуал санах ойн мэдээллийг хадгалдаг хэсгийг page table гэнэ. Үйлдлийн систем дискнээс файл унших юм бол кернелийн түвшинд санах ойруу 4096 байтууд бүхий page-үүдийн цуваа болон ачаалагдана гэсэн үг.</p>
+<p><img src="/page_table.png" alt=""></p>
+<p>Кернел 4.5-аас өмнө систем дээр хэрэглэгч &ldquo;File 1&rdquo; нэртэй файлыг хуулан хаа нэгтээ paste хийхэд /File 2/ тухайн файлд харгалзах page-үүдийг kernel space-ээс уншаад user space дэх буферт түр хадгалаад дахин kernel space-рүү бичилт хийдэг байжээ.</p>
+<p><img src="/user_space.jpg" alt=""></p>
+<p>Гэтэл кернел хөгжүүлэгчдийн дунд kernel space дээр байгаа файлыг заавал user space-ээр дамжуулаад хуулбарлаад байх шаардлага байна уу? гэсэн асуулт гарч ирсэн бөгөөд kernel v2.2-д sendfile() нэртэй syscall-ыг /процессоос кернелрүү ханддаг интерфэйс/ гаргаж ирсэн ба энэ нь файл хуулахад шууд кернелийн түвшинд хуулдаг болж нэлээд resource-г хэмнэдэг болсон байна. Үүний дараа kernel v4.5-д splice syscall-ыг гаргаж ирсэн ба энэ нь хэрвээ хэрэглэгч файлыг хуулах юм бол шинээр үүсэх файл нь original файлын санах ойн заагч байхаар шийджээ. Өөрөөр хэлбэл хэрэглэгчид файл хуулагдсан юм шиг харагдах боловч ард нь зөвхөн original файлын байрлах page-ын ойн хаяг байгаа гэж ойлгох ба үүнийг <strong>zero-copy</strong> арга гэж нэрлэнэ.</p>
+<p><img src="/0copy.jpg" alt=""></p>
+<p>Splice-ын хийж байгаа арын процесс нь File 1-ын хамгийн эхний page-ын эхлэх санах ойн хаягийг pipe—руу биччихэж байгаа юм. Pipe-ыг энгийнээр холбогч гуурсан хоолой гээд төсөөлж болох ба гуурсны нэг үзүүрт page-ын санах ойн хаяг нөгөө талд нь File 1 байгаа бөгөөд File 2-ыг нээж байгаа юм шиг боловч үнэндээ гуурсаар дамжуулаад File 1-ыг нээж байгаа .</p>
+<p>Харин хэрвээ хэрэглэгч <strong>File 2-д</strong> өөрчлөлт хийх юм бол кернел өмнөх шигээ файлыг хуулбарлаад өөрчлөлттэй нь хамт хадгалаад явчихдаг ба <strong>Copy on Write (COW)</strong> арга гэж нэрлэнэ. Жич: Dirty COW нь сopy on write үйлдэл дээр race condition ашиглан файлруу бичдэг эмзэг байдал юм.</p>
+<p><img src="/cow.jpg" alt=""></p>
+<p><strong>Асуудал нь юундаа байна вэ?</strong></p>
+<p>Линукс үйлдлийн системийн нь &ldquo;бүх зүйл файл&rdquo; гэсэн санаан дээр тулгуурладаг бөгөөд өмнө яригдсан page, pipe зэрэг ч мөн файл юм. Тэгээд файлд унших, бичих, өөрчлөх үйлдлүүд хийгдэхэд First Input First Out /FIFO/ зарчмыг баримтална. Өөрөөр хэлбэл хамгийн түрүүнд орж ирсэн файлыг боловсруулж дууссаны дараа түүний ардах файлыг боловсруулна гэх мэтээр.</p>
+<p>Pipe нь мөн л файл нь бол түүн дээр унших, бичих үйлдлүүд хийгдэх нь тодорхой бөгөөд линукс үйлдлийн систем кернелд pipe object-ыг кодчилохдоо pipe_inode_info бүтэц /struct/ төрөлтэйгөөр дараах бүтэцтэйгээр хэрэглэх ба дотроо pipe_buf нэртэй буферыг ашиглана.</p>
+<p><img src="/pipe_inode.jpg" alt=""></p>
+<p>Хэрвээ тэр pipe_buf-ын бүтцийг задлаад харах юм бол нэг page-ын хэмжээтэй буюу 4096 байтын хэмжээтэй дотроо өгөгдлийн бас pipe-ын metadata мэдээллийг агуулсан байна.</p>
+<p><img src="/pipe_buffer.jpg" alt=""></p>
+<p>Хамгийн сонирхолтой нь хэрвээ pipe-руу бичилт хийх юм бол үйлдлийн систем маань бичилт хийх боломжтой pipe_buf-руу өгөгдлөө бичнэ. Гэтэл pipe_buf маань 4096 байтын багтаамжтай учраас үргүй зардал бага гаргах гээд өөр бичих зүйл байвал нэмээд дүүртэл нь хүлээх тохиолдол гардаг байна.</p>
+<p><img src="/pipe_buffer_diagram.jpg" alt=""></p>
+<p>2016 онд кернелд зөвхөн anonymous pipe_buf-рүү дараалан бичсэн өгөгдлийг merge хийх боломжтой CAN_MERGE flag-ыг гаргаж ирсэн ба 2020 оны өөрчлөлтөөр PIPE_BUF_FLAG_CAN_MERGE flag-ыг бүх pipe_buf дээр тохируулах боломжтой болгосон ч default-аар огт утга оноолгүйгээр орхисон байна. Хэрвээ CAN_MERGE flag-д 1 утга оноосон үед write() call дуудагдах юм бол pipe_buffer дэх дараалсан өгөгдлүүдийг хооронд нь нэгтгэчихдэг бөгөөд энэ алдааг ашиглан read only файлд ч өөрчлөлт хийх боломжтой болж байгаа юм.</p>
+<p><strong>Dirty PIPE эмзэг байдал дараах байдлаар exploit хийгдэнэ.</strong></p>
+<ol>
+<li>PIPE үүсгэнэ</li>
+<li>Үүсгэсэн pipe-аа дурын өгөгдлөөр 4096 байт болтол нь дүүргэнэ гэхдээ PIPE_BUF_FLAG_CAN_MERGE flag-д утга оноосон байх ёстой</li>
+<li>Өмнөх үйлдэлд pipe_buffer дүүрсэн учраас шинээр page хуваарьлагдах ба PIPE_BUF_FLAG_CAN_MERGE flag-ын утга өмнөх page-ынхтэй адилхан байна. Учир нь default-аар ямар нэг утга оноодоггүй учраас өмнөх утга нь хэвээрээ үлдсэн гэсэн үг.</li>
+<li>Target буюу өөрчлөлт хийх read only эрхтэй файлын яг аль хэсэг өөрчлөлт хийх offset-ын яг өмнөх хаягийг splice ашиглан pipe-руу ачааллана</li>
+<li>Дарж бичих өгөгдлөө pipe-руу бичилт хийхэд /write() call/ файлд өөрчлөлт орсон байна.</li>
+</ol>
+<p>Линукс кернелийн 5.8 хувилбараас эхлэн zero copy үйлдэл хийж байгаа тохиолдолд pipe_buffer-лүү өөр өгөгдөл бичихгүй байхаар сайжруулалт хийгджээ.</p>
+<p><img src="/dirty-pipe-patch.jpg" alt=""></p>
+<p>Дэлгэрэнгүйг:</p>
+<p><a href="https://dirtypipe.cm4all.com/">https://dirtypipe.cm4all.com/</a></p>
+<p><a href="https://blog.aquasec.com/deep-analysis-of-the-dirty-pipe-vulnerability">https://blog.aquasec.com/deep-analysis-of-the-dirty-pipe-vulnerability</a></p>
+</div>
+</article>
+
+
+
+
+
+
+                    </main><footer>
+    <hr />
+
+<p><small>
+        2023 &copy; 
+    </small></p>
+    <p><small>
+        <a href='https://gitlab.com/gabmus/hugo-ficurinia'>Ficurinia theme</a> for <a href='https://gohugo.io'>Hugo</a> by <a href='https://gabmus.org'>Gabriele Musco</a>. Licensed under <a href='https://www.gnu.org/licenses/agpl-3.0.html'>GNU AGPLv3</a>.
+    </small></p>
+</footer>
+</div>
+            </div>
+        </div>
+
+
+</body>
+</html>

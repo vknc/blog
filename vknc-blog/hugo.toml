@@ -1,5 +1,0 @@
-baseURL = 'https://vknc.github.io/'
-languageCode = 'en-us'
-title = 'VKNC blog'
-theme = 'ficurinia'
-publishDir = "docs"
